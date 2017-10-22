@@ -1,0 +1,26 @@
+service: tgif
+
+provider:
+  name: aws
+  runtime: nodejs6.10
+  stage: dev
+  region: ap-northeast-1
+  role: arn:aws:iam::491150663186:role/service-role/basic.execution
+  memorySize: 256
+  timeout: 15
+
+functions:
+  tgif:
+    handler: handler.main
+    description: Japanese Holiday API
+    environment:
+      DEBUG: true
+      BUCKET: janmir
+      FILE: .csv
+    tags:
+      type: public
+
+package:
+  exclude:
+    - README.md
+    - event.json
