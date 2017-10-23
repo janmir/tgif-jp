@@ -16,12 +16,12 @@ functions:
     environment:
       DEPLOY: false
       DEBUG: true
-      BUCKET: holidays.jp
+      BUCKET: jp.holidays
       YAML_FILE: source.yaml
       FILE: .csv
-      # URL: http://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv
       EMAIL: paulzu100@gmail.com
       EMAIL_REGION: us-east-1
+      JSON_FILE: jp.json
     tags:
       type: public
 

@@ -25,12 +25,14 @@ const DEPLOY = process.env.DEPLOY === "true" || false;
 const DEBUG = process.env.DEBUG || false;
 const YAML_FILE = process.env.YAML_FILE || "";
 const BUCKET = process.env.BUCKET || "";
+const JSON_FILE = process.env.JSON_FILE || "untitled"
 
 const fn = {
   jsonObj: null,
   callback: null,
   sexyback: (events, response) => {
     if(fn.callback !== null){
+      console.log("----------Response-----------");            
       console.log(response);
 
       fn.callback(null, response);
@@ -49,6 +51,19 @@ const fn = {
   perfEnd:() => {
     data.performance.end = now();
     data.performance.execution = (data.performance.end - data.performance.start).toFixed(2);
+  },
+  s3Save: (bucket, key, data) => {
+    var s3 = new aws.S3();
+    var params = {
+      Bucket : bucket,
+      Key : key,
+      Body : data
+    }
+
+    s3.putObject(params, function(err, data) {
+      if (err) console.log(err, err.stack); // an error occurred
+      else     console.log(data);           // successful response
+    });
   },
   formatMessage: (message)=>{
     return "<html><body><div>" + message + "</div></body></html>";
@@ -114,11 +129,32 @@ const fn = {
     
   },
   getch: ()=>{
+    //Get from S3
+    let s3 = new aws.S3();
+    var params = {
+        Bucket: BUCKET,
+        Key: JSON_FILE
+    }
+    var done = false;
+    s3.getObject(params, function(err, local_data) {
+        if(!err){ 
+            done = true;
+            let strData = local_data.Body.toString('utf-8');
+            let obj = JSON.parse(strData);
+
+            //start perf
+            fn.perfEnd();
+
+            //Add performance
+            obj.execution = data.performance.execution;
     
+            fn.sexyback(null, obj);
+        }else{
+            throw {message:err.message};
+        } 
+    });
   },
   fetch: () => {
-    console.log(DEPLOY == false);
-    
     //Get yaml list of sources
     if(fn.jsonObj === null){
 
@@ -130,7 +166,7 @@ const fn = {
         let config = yaml.safeLoad(file);
         let indentedJson = JSON.stringify(config, null, 4);
   
-        fn.jsonObj = JSON.parse(indentedJson);
+        fn.jsonObj = JSON.parse(indentedJson).reverse();
       }else{
         console.log("//From Bucket");
   
@@ -148,7 +184,7 @@ const fn = {
                 let config = yaml.safeLoad(file);
                 let indentedJson = JSON.stringify(config, null, 4);
     
-                fn.jsonObj = JSON.parse(indentedJson);
+                fn.jsonObj = JSON.parse(indentedJson).reverse();
             }else{
                 throw {message:err.message};
             } 
@@ -160,10 +196,15 @@ const fn = {
     }
 
     //Log content
+    fn.log("//Data");
     fn.log(fn.jsonObj);
 
     if(fn.jsonObj !== null){
       let obj = fn.jsonObj.pop();
+
+      //Log content
+      fn.log("//Object");
+      fn.log(obj);
 
       if(obj !== undefined){
         let url = obj.url;
@@ -197,6 +238,9 @@ const fn = {
       
             //Validate data
             if(fn.validateData(data.ls)){
+              
+              fn.s3Save(BUCKET, JSON_FILE, JSON.stringify({holidays:data.ls}));
+              
               fn.sexyback(null, {
                   result: true,
                   data:data
@@ -205,12 +249,14 @@ const fn = {
             }
       
           }catch(error){
-            console.log(error.message);
+            console.log("//Error: " + error.message);
+
+            //Fetch again to continue on next
             fn.fetch();
           }
         });
       }else{
-        throw {message:""};
+        throw {message:"Unable to fetch data from sources."};
       }
     }
   }
@@ -219,7 +265,7 @@ const fn = {
 module.exports.main = (events, context, callback) => {
   console.log("----------Request-----------");
   console.log(events);
-  console.log("----------Response-----------");      
+  console.log("----------Logs-----------");      
   
   //performance check start
   fn.perfStart();
