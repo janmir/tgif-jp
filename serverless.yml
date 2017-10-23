@@ -14,9 +14,14 @@ functions:
     handler: handler.main
     description: Japanese Holiday API
     environment:
+      DEPLOY: false
       DEBUG: true
-      BUCKET: janmir
+      BUCKET: holidays.jp
+      YAML_FILE: source.yaml
       FILE: .csv
+      # URL: http://www8.cao.go.jp/chosei/shukujitsu/syukujitsu.csv
+      EMAIL: paulzu100@gmail.com
+      EMAIL_REGION: us-east-1
     tags:
       type: public
 
