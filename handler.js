@@ -51,6 +51,8 @@ const fn = {
   perfEnd:() => {
     data.performance.end = now();
     data.performance.execution = (data.performance.end - data.performance.start).toFixed(2);
+
+    return data.performance.execution;
   },
   s3Save: (bucket, key, data) => {
     var s3 = new aws.S3();
@@ -112,7 +114,7 @@ const fn = {
   validateData: (data_list)=>{    
     try {
       data_list.forEach((element)=>{
-        let matches = element.match(/(Saturday|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday),\w+\s\d+,[\s\w]+/gi);
+        let matches = element.match(/\w+\s\d+,(Saturday|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday),[\s\w]+/gi);
         if (matches === null){
           throw {
             message:"The string \"" + element + "\" is invalid."
@@ -142,12 +144,10 @@ const fn = {
             let strData = local_data.Body.toString('utf-8');
             let obj = JSON.parse(strData);
 
-            //start perf
-            fn.perfEnd();
-
             //Add performance
-            obj.execution = data.performance.execution;
+            obj.execution = fn.perfEnd();
     
+            //Call callback
             fn.sexyback(null, obj);
         }else{
             throw {message:err.message};
@@ -226,8 +226,8 @@ const fn = {
               let str = element.text.replace(/(\s\s)+/gi, ",");
               let splt = str.split(",").filter(e =>{return e.length});
       
-              out.push(splt[0]); //Sunday ~ Saturday
               out.push(splt[2]); //Date short string        
+              out.push(splt[0]); //Sunday ~ Saturday
               out.push(splt[3]); //Date description       
               
               return out.join(",");
