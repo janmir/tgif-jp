@@ -22,6 +22,7 @@ functions:
       EMAIL: paulzu100@gmail.com
       EMAIL_REGION: us-east-1
       JSON_FILE: jp.json
+      SEND_MAIL: false
     tags:
       type: public
 

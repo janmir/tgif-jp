@@ -22,10 +22,11 @@ const URL = process.env.URL || "";
 const EMAIL = process.env.EMAIL || "";
 const EMAIL_REGION = process.env.EMAIL_REGION || "";
 const DEPLOY = process.env.DEPLOY === "true" || false;
-const DEBUG = process.env.DEBUG || false;
+const DEBUG = process.env.DEBUG === "true" || false;
 const YAML_FILE = process.env.YAML_FILE || "";
 const BUCKET = process.env.BUCKET || "";
 const JSON_FILE = process.env.JSON_FILE || "untitled"
+const SEND_MAIL = process.env.SEND_MAIL === "true" || false;
 
 //Array extend
 Array.prototype.last = function(offset = 1) {
@@ -90,48 +91,50 @@ const fn = {
     return "<html><body><div>" + message + "</div></body></html>";
   },
   sendMail: (email, message)=>{
+    if(SEND_MAIL){
       //Send email
       if(email !== ""){
-      
-      let ses = new aws.SES({
-        region:EMAIL_REGION
-      });
-
-      message = fn.formatMessage(message);
-
-      let params = {
-        Destination: {
-            ToAddresses: [email]
-        },
-        Message: {
-            Body: {
-              Html: {
-                  Charset: 'UTF-8',
-                  Data: message
-              }
-            },
-            Subject: {
-            Charset: 'UTF-8',
-            Data: 'SES Mail'
-            }
-        },
-        ReturnPath: email,
-        Source: email
-      }
-
-      fn.log("-----------Email------------");
-      fn.log(message);
-      
-      if(DEPLOY){
-        ses.sendEmail(params, (err, data) => {
-          if (err) fn.log(err, err.stack)
-          else fn.log(data)
+        
+        let ses = new aws.SES({
+          region:EMAIL_REGION
         });
+  
+        message = fn.formatMessage(message);
+  
+        let params = {
+          Destination: {
+              ToAddresses: [email]
+          },
+          Message: {
+              Body: {
+                Html: {
+                    Charset: 'UTF-8',
+                    Data: message
+                }
+              },
+              Subject: {
+              Charset: 'UTF-8',
+              Data: 'SES Mail'
+              }
+          },
+          ReturnPath: email,
+          Source: email
+        }
+  
+        fn.log("-----------Email------------");
+        fn.log(message);
+        
+        if(DEPLOY){
+          ses.sendEmail(params, (err, data) => {
+            if (err) fn.log(err, err.stack)
+            else fn.log(data)
+          });
+        }
       }
     }
   },
   validateDate: (format) => {
-    let m =  format.match(/((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s[0-3]*[0-9]|[0-3]*[0-9]\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/g);
+    let m =  format.match(/((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-[0-3]*[0-9])/g);
     return m !== null && m.length == 1;
   },
   validateFormat: (format) => {
@@ -157,8 +160,10 @@ const fn = {
   checkch: (date)=>{
     //Validate date
     if(date !== null && fn.validateDate(date)){
+      fn.log("//Date Valid");
+
       let newObj = {};
-      let obj = fn.getch("M dd", false);
+      let obj = fn.getch("M-dd", false);
 
       newObj.holiday = obj.holidays.includes(date);
       newObj.result = true;
@@ -166,7 +171,9 @@ const fn = {
 
       fn.sexyback(null, newObj);
     }else{
-      throw {message: "Date invalid. Format must be <M><Space><dd>."};
+      fn.log("//Date inValid");
+      
+      throw {message: "Date invalid. Format must be M-dd."};
     }
   },
   getch: (format, async = true)=>{
@@ -422,9 +429,12 @@ module.exports.main = (events, context, callback) => {
   let date = decodeURIComponent(events.date) || null;
   
   //Log parameters
-  console.log("Action: '"+ action + "'");
-  console.log("Format: '"+ format + "'");
-  console.log("Date: '"+ date + "'");
+  let actionStr = "Action: '"+ action + "'";
+  console.log(actionStr);
+  let formatStr = "Format: '"+ format + "'";
+  console.log(formatStr);
+  let dateStr = "Date: '"+ date + "'";
+  console.log(dateStr);
   
   try{
     switch(action){
@@ -442,7 +452,11 @@ module.exports.main = (events, context, callback) => {
       }
     }
   }catch(error){
-    fn.sendMail(EMAIL, "<span style='color:red;font-weight:bold'>An Error Occured:</span> <br/>"+ error.message);
+    fn.sendMail(EMAIL, "<span style='color:red;font-weight:bold'>An Error Occured:</span> <br/>" + 
+                       error.message + 
+                       "<br/>" + actionStr +
+                       "<br/>" + formatStr +
+                       "<br/>" + dateStr);
     fn.sexyback(null, {result: false, error:error.message});
   }
 };
