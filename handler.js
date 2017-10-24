@@ -437,7 +437,7 @@ module.exports.main = (events, context, callback) => {
   console.log(dateStr);
   
   try{
-    switch(action){
+    switch(action.toUpperCase()){
       case "FETCH":{
         fn.fetch();
       }break;
