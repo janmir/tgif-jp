@@ -190,13 +190,15 @@ const fn = {
 
               //Parse and format
               if(format !== null && fn.validateFormat(format)){
+                fn.log("//Format Valid");
+
                 obj.holidays = data.holidays.map(e=>{
                   e = e.split(",");
                   let newStr = format;
 
                   //match d -> day
                   let d = format.match(/d+/g);
-                  if(d !== undefined){
+                  if(d !== null){
                     let nd = e[0] + "";
                     let p = d[0];
                     nd = nd.padStart(p.length, "0");
@@ -217,6 +219,8 @@ const fn = {
                   return newStr;
                 });
               }else{
+                fn.log("//Format inValid");
+                
                 obj.holidays = data.holidays;
               }
       
@@ -414,8 +418,13 @@ module.exports.main = (events, context, callback) => {
   //inits
   fn.jsonObj = null;
   let action = events.action || "FETCH";
-  let format = events.format || null;
-  let date = events.date || null;
+  let format = decodeURIComponent(events.format) || null;
+  let date = decodeURIComponent(events.date) || null;
+  
+  //Log parameters
+  console.log("Action: '"+ action + "'");
+  console.log("Format: '"+ format + "'");
+  console.log("Date: '"+ date + "'");
   
   try{
     switch(action){

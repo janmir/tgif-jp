@@ -1,5 +1,5 @@
 {
-    "action":"CHECK",
-    "format":"M dd(W) -> D",
+    "action":"LIST",
+    "format":"M-%3ED",
     "date": "Jan 01"
 }
