@@ -1,3 +1,5 @@
 {
-    "action":"LIST"
+    "action":"CHECK",
+    "format":"M dd(W) -> D",
+    "date": "Jan 01"
 }

@@ -27,12 +27,31 @@ const YAML_FILE = process.env.YAML_FILE || "";
 const BUCKET = process.env.BUCKET || "";
 const JSON_FILE = process.env.JSON_FILE || "untitled"
 
+//Array extend
+Array.prototype.last = function(offset = 1) {
+  return this[this.length - offset];
+}
+
+//String Extend
+String.prototype.padStart = function(len, padding) {
+  if(this.length < len){
+    let diff = len - this.length;
+
+    var arr = Array(diff).fill(padding);
+    arr.push(this);
+    return arr.join("");
+  }else{
+    return this;
+  }
+}
+
+//Master Function
 const fn = {
   jsonObj: null,
   callback: null,
   sexyback: (events, response) => {
     if(fn.callback !== null){
-      console.log("----------Response-----------");            
+      console.log("---------Response-----------");            
       console.log(response);
 
       fn.callback(null, response);
@@ -100,7 +119,7 @@ const fn = {
         Source: email
       }
 
-      fn.log("----------Email-----------");
+      fn.log("-----------Email------------");
       fn.log(message);
       
       if(DEPLOY){
@@ -111,10 +130,18 @@ const fn = {
       }
     }
   },
+  validateDate: (format) => {
+    let m =  format.match(/((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s[0-3]*[0-9]|[0-3]*[0-9]\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/g);
+    return m !== null && m.length == 1;
+  },
+  validateFormat: (format) => {
+    let m =  format.match(/(\bM\b)|(\bd+\b)|(\bW\b)|(\bD\b)/g);
+    return m !== null && m.length > 0 && m.length < 5;
+  },
   validateData: (data_list)=>{    
     try {
       data_list.forEach((element)=>{
-        let matches = element.match(/\w+\s\d+,(Saturday|Sunday|Monday|Tuesday|Wednesday|Thursday|Friday),[\s\w]+/gi);
+        let matches = element.match(/^[0-3]*[0-9],(Sun|Mon|Tue|Wed|Thu|Fri|Sat),(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec),[ -\.\w\W\d]+$/gi);
         if (matches === null){
           throw {
             message:"The string \"" + element + "\" is invalid."
@@ -127,10 +154,25 @@ const fn = {
       throw e;
     }
   },
-  checkch: ()=>{
-    
+  checkch: (date)=>{
+    //Validate date
+    if(date !== null && fn.validateDate(date)){
+      let newObj = {};
+      let obj = fn.getch("M dd", false);
+
+      newObj.holiday = obj.holidays.includes(date);
+      newObj.result = true;
+      newObj.execution = fn.perfEnd();
+
+      fn.sexyback(null, newObj);
+    }else{
+      throw {message: "Date invalid. Format must be <M><Space><dd>."};
+    }
   },
-  getch: ()=>{
+  getch: (format, async = true)=>{
+    var obj = {};
+    var done = false;
+
     //Get from S3
     let s3 = new aws.S3();
     var params = {
@@ -139,26 +181,76 @@ const fn = {
     }
     var done = false;
     s3.getObject(params, function(err, local_data) {
-        if(!err){ 
-            done = true;
-            let strData = local_data.Body.toString('utf-8');
-            let obj = JSON.parse(strData);
+        try{
+          if(!err){ 
+              done = true;
+              let strData = local_data.Body.toString('utf-8');
+              let data = JSON.parse(strData);
+              
 
-            //Add performance
-            obj.execution = fn.perfEnd();
-    
-            //Call callback
-            fn.sexyback(null, obj);
-        }else{
-            throw {message:err.message};
-        } 
+              //Parse and format
+              if(format !== null && fn.validateFormat(format)){
+                obj.holidays = data.holidays.map(e=>{
+                  e = e.split(",");
+                  let newStr = format;
+
+                  //match d -> day
+                  let d = format.match(/d+/g);
+                  if(d !== undefined){
+                    let nd = e[0] + "";
+                    let p = d[0];
+                    nd = nd.padStart(p.length, "0");
+
+                    //replace
+                    newStr = newStr.replace(p, nd);
+                  }
+
+                  //replace M -> Month
+                  newStr = newStr.replace(/\bM\b/g, e[2]);
+
+                  //replace W -> Week
+                  newStr = newStr.replace(/\bW\b/g, e[1]);
+                                    
+                  //replace D -> description
+                  newStr = newStr.replace(/\bD\b/g, e[3]);
+                  
+                  return newStr;
+                });
+              }else{
+                obj.holidays = data.holidays;
+              }
+      
+              if(async){
+                //Add performance and result
+                obj.result = true;
+                obj.execution = fn.perfEnd();
+
+                //Call callback
+                fn.sexyback(null, obj);
+              }
+          }else{
+              throw {message: err.message};
+          } 
+        }catch(err){
+          throw {message: err.message};
+        }
     });
+
+    if(!async){
+      //Wait
+      while(!done) {
+        sync.runLoopOnce();
+      }
+
+      //return
+      return obj;    
+    }
   },
   fetch: () => {
     //Get yaml list of sources
     if(fn.jsonObj === null){
 
-      if(DEPLOY === false){
+      if(!DEPLOY){
         console.log("//From Local");
   
         //Get from local file
@@ -179,16 +271,20 @@ const fn = {
         var done = false;
         s3.getObject(params, function(err, data) {
             if(!err){ 
-                done = true;
                 let file = data.Body.toString('utf-8');
                 let config = yaml.safeLoad(file);
                 let indentedJson = JSON.stringify(config, null, 4);
     
                 fn.jsonObj = JSON.parse(indentedJson).reverse();
-            }else{
+
+                //End Wait loop
+                done = true;
+              }else{
                 throw {message:err.message};
             } 
         });
+
+        //Wait for s3 task to finish
         while(!done) {
             sync.runLoopOnce();
         }
@@ -209,6 +305,7 @@ const fn = {
       if(obj !== undefined){
         let url = obj.url;
         let selector = obj.selector;
+        let child = obj.child;
         
         //Get the data
         request.get({
@@ -220,34 +317,68 @@ const fn = {
             let html = $.parse(body);
             let table = html.querySelectorAll(selector);
             
-            //Format return data
-            data.ls = table.map((element)=>{
-              let out = [];
-              let str = element.text.replace(/(\s\s)+/gi, ",");
-              let splt = str.split(",").filter(e =>{return e.length});
-      
-              out.push(splt[2]); //Date short string        
-              out.push(splt[0]); //Sunday ~ Saturday
-              out.push(splt[3]); //Date description       
-              
-              return out.join(",");
-            });
-      
-            //Performance end
-            fn.perfEnd();
-      
-            //Validate data
-            if(fn.validateData(data.ls)){
-              
-              fn.s3Save(BUCKET, JSON_FILE, JSON.stringify({holidays:data.ls}));
-              
-              fn.sexyback(null, {
-                  result: true,
-                  data:data
+            if(table.length > 0){              
+              var i = $.parse("<i>,</i>");
+
+              //Format return data
+              data.ls = table.map((element)=>{                
+                let out = ['','',''];
+
+                //Add comma to each td
+                element.querySelectorAll(child).forEach(e=>{
+                  e.appendChild(i);
+                });
+
+                //remove all dates
+                let str = element.text.replace(/[\d]{4}-[0-1][0-9]-[0-2][0-9]/g,"");
+
+                //remove all double space
+                str = str.replace(/(\s\s)+/gi, "");
+
+                //remove pre-post
+                str = str.trim();
+
+                //Matches
+                let date = str.match(/((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s[0-3]*[0-9]|[0-3]*[0-9]\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/g);
+                let week = str.match(/(Sun|Mon|Tue|Wed|Thu|Fri|Sat)/g);
+
+                if(date !== undefined && week !== undefined){
+                  //get the day
+                  out[0] = date[0].match(/([0-3]*[0-9])/g).last();
+
+                  //get the month
+                  out[2] = date[0].match(/(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/g).last();
+                  
+                  //get week
+                  out[1] = week[0]; //Sunday ~ Saturday 
+
+                  //get description
+                  out[3] = str.split(",").filter(e=>{return e.length}).last().trim();
+                }else{
+                  throw {message: "String does not match required data pattern."}
                 }
-              );    
-            }
-      
+                
+                return out.join(",");
+              });
+
+              //Performance end
+              fn.perfEnd();
+
+              //Validate data
+              if(fn.validateData(data.ls)){
+                
+                //Save the data to s3
+                fn.s3Save(BUCKET, JSON_FILE, JSON.stringify({holidays:data.ls}));
+                
+                fn.sexyback(null, {
+                    result: true,
+                    data:data
+                  }
+                );    
+              }
+            }else{
+              throw {message:"Source has no content."}
+            }      
           }catch(error){
             console.log("//Error: " + error.message);
 
@@ -265,7 +396,7 @@ const fn = {
 module.exports.main = (events, context, callback) => {
   console.log("----------Request-----------");
   console.log(events);
-  console.log("----------Logs-----------");      
+  console.log("------------Logs------------");      
   
   //performance check start
   fn.perfStart();
@@ -273,17 +404,20 @@ module.exports.main = (events, context, callback) => {
   //Set Callback function
   fn.callback = callback;
 
-  let action = events.action || "FETCH";  
+  let action = events.action || "FETCH";
+  let format = events.format || null;
+  let date = events.date || null;
+  
   try{
     switch(action){
       case "FETCH":{
         fn.fetch();
       }break;
       case "LIST":{
-        fn.getch();
+        fn.getch(format);
       }break;
       case "CHECK":{
-        fn.checkch();
+        fn.checkch(date);
       }break;
     }
   }catch(error){
