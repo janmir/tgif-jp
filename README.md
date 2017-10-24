@@ -1,18 +1,18 @@
-# :japan::japanese_castle:Japanese Holiday API
+# :maple_leaf::japan::japanese_castle:Japanese Holiday API
 ## :mount_fuji:Overview
 Web api for listing all Japanese Holidays of the current year and Checking if a certain date is a holiday.
 Holidays are based on holiday listing sites like [publicholidays.jp](https://publicholidays.jp). In this release I have provided at least 2 sources. 
 Data is periodically updated *(Atleast once a month)*.
 ## :tokyo_tower:Getting Started
 You don't need to clone the source to use the api, it is already publicly available via this url: https://api.janmir.me/holiday. Please refer to `Query` section below for more details about api usage.
-## Query
+## :octocat:Query
 > Request must be in REST-GET format.
 Request payload body is defined below.
 ```json
 {
-    action: "list",
-    format: "M/dd, D",
-    date: "Mar-15"
+    "action": "list",
+    "format": "M/dd, D",
+    "date": "Mar-15"
 }
 ```
 > **Note:** *This is a GET request, so you can't directly use the example payload above. But don't be sad I have provided exaple URLs below*
@@ -115,14 +115,14 @@ Key | Type | Definition
 ------------ | ------------- | -------------
 *result* | bool | Result of the API request.
 *error* | String | Error Message.
-## Versioning & Tracking
+## :cherry_blossom:Versioning & Tracking
 - `v0.0.1`: Initial Project Sources
     - [x] Scheduled data fetch and store.
     - [x] Handling GET requests.
         - [x] GET request for date checking.
         - [x] GET request for holiday list.
-    - [ ] Documentation Page
-## Acknowledgements
+    - [ ] External Documentation Page
+## :cat2:Acknowledgements
 - Thanks for my data sources.
     - https://publicholidays.jp
     - http://www.officeholidays.com/countries/japan/index.php
