@@ -4,6 +4,7 @@
   "description": "Japanese Holiday API",
   "main": "handler.js",
   "scripts": {
+    "deploy": "serverless deploy", 
     "start": "serverless invoke local -f tgif -p event.json",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

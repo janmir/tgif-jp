@@ -320,6 +320,9 @@ const fn = {
             if(table.length > 0){              
               var i = $.parse("<i>,</i>");
 
+              //log
+              fn.log("//Parsing");
+
               //Format return data
               data.ls = table.map((element)=>{                
                 let out = ['','',''];
@@ -338,6 +341,8 @@ const fn = {
                 //remove pre-post
                 str = str.trim();
 
+                fn.log("Input: " + str);
+
                 //Matches
                 let date = str.match(/((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s[0-3]*[0-9]|[0-3]*[0-9]\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/g);
                 let week = str.match(/(Sun|Mon|Tue|Wed|Thu|Fri|Sat)/g);
@@ -353,10 +358,12 @@ const fn = {
                   out[1] = week[0]; //Sunday ~ Saturday 
 
                   //get description
-                  out[3] = str.split(",").filter(e=>{return e.length}).last().trim();
+                  out[3] = str.split(",").filter(e=>{e = e.trim();return e.length;}).last().trim();
                 }else{
                   throw {message: "String does not match required data pattern."}
                 }
+
+                fn.log("Output: " + out.join(","));
                 
                 return out.join(",");
               });
@@ -404,6 +411,8 @@ module.exports.main = (events, context, callback) => {
   //Set Callback function
   fn.callback = callback;
 
+  //inits
+  fn.jsonObj = null;
   let action = events.action || "FETCH";
   let format = events.format || null;
   let date = events.date || null;
@@ -419,6 +428,9 @@ module.exports.main = (events, context, callback) => {
       case "CHECK":{
         fn.checkch(date);
       }break;
+      default:{
+        throw {message: "I did nothing. Incorrect [action]?"};
+      }
     }
   }catch(error){
     fn.sendMail(EMAIL, "<span style='color:red;font-weight:bold'>An Error Occured:</span> <br/>"+ error.message);
