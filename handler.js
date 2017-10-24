@@ -70,7 +70,7 @@ const fn = {
   },
   perfEnd:() => {
     data.performance.end = now();
-    data.performance.execution = (data.performance.end - data.performance.start).toFixed(2);
+    data.performance.execution = parseFloat((data.performance.end - data.performance.start).toFixed(2));
 
     return data.performance.execution;
   },
