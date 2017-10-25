@@ -5,6 +5,7 @@ const aws = require('aws-sdk');
 const fs = require('fs');
 const request = require("request");
 const moment = require('moment-timezone');
+const transform = require('moment-transform');
 const now = require("performance-now");
 const $ = require('fast-html-parser');
 const sync = require('deasync');
@@ -133,6 +134,51 @@ const fn = {
       }
     }
   },
+  stringifierBaby: (which, value)=>{
+    let mos = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    switch(which){
+      case "time":{
+      }break;
+      case "day":{
+      }break;
+      case "month":{
+        return mos[value-1] || value;
+      }break;
+      case "date":{
+      }break;
+      case "week":{
+      }break;
+    }
+
+    return value;
+  },
+  now: (which, separator=':', offset = '+0')=>{
+    let value = -1;
+    let mom = moment().tz('Asia/Tokyo');
+    switch(which){
+      case "time":{
+        value = mom.format('hh'+separator+'mm A');
+      }break;
+      case "day":{
+        value = mom.transform(offset,'DD').format('DD');
+      }break;
+      case "month":{
+        value = mom.transform(offset,'MM').format('MM');
+      }break;
+      case "date":{
+        value = mom.transform('MM' + separator + offset,'MM'+separator+'DD').format('MM'+separator+'DD');
+      }break;
+      case "week":{
+        value = mom.format('e');
+        value = parseInt(value);                                    
+        if(value == 0){
+            value = 7;
+        }
+      }break;
+    }
+
+    return value;
+  },
   validateDate: (format) => {
     let m =  format.match(/((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)-[0-3]*[0-9])/g);
     return m !== null && m.length == 1;
@@ -168,6 +214,7 @@ const fn = {
       newObj.holiday = obj.holidays.includes(date);
       newObj.result = true;
       newObj.execution = fn.perfEnd();
+      newObj.date = date;
 
       fn.sexyback(null, newObj);
     }else{
@@ -446,6 +493,28 @@ module.exports.main = (events, context, callback) => {
       }break;
       case "CHECK":{
         fn.checkch(date);
+      }break;
+      case "TODAY":{
+        //get todays date
+        let today = fn.now('date','-').split('-');
+        today = fn.stringifierBaby('month', today[0]) + "-" + today[1];
+
+        //Log
+        fn.log("Today: " + today);
+        
+        //check
+        fn.checkch(today);
+      }break;
+      case "TOMORROW":{
+        //get tomorrow date
+        let tomorrow = fn.now('date','-','+1').split('-');
+        tomorrow = fn.stringifierBaby('month', tomorrow[0]) + "-" + tomorrow[1];
+
+        //Log
+        fn.log("Tomorrow: " + tomorrow);
+
+        //check
+        fn.checkch(tomorrow);
       }break;
       default:{
         throw {message: "I did nothing. Incorrect [action]?"};

@@ -29,6 +29,8 @@ Action | Definition
 **/fetch** | Fetches and stores holiday data from various site defined in [source.yaml](https://github.com/janmir/tgif-jp/blob/master/source.yaml). I discourage using this one as it is already automatically being called once a month. Thanks! :heart_eyes:
 **/list** | Lists all holidays in Japan so we can travel more! yeah!
 **/check** | Checks if a certain date is a holiday or not.
+**/today** | Checks if today is a holiday.
+**/tomorrow** | Umm should I still explain this?
 ### Parameters
 > *Parameters* gives you the ability to pass data to the api. And also to customize the response it sends back.
 ```url
@@ -95,7 +97,8 @@ Key | Type | Definition
 {
     "holiday": false,
     "result": true,
-    "execution": 0100.0010
+    "execution": 0100.0010,
+    "date": "Mar-15"
 }
 ```
 Key | Type | Definition
@@ -103,6 +106,7 @@ Key | Type | Definition
 *result* | bool | Result of the API request.
 *holiday* | Array | If given date is a holiday.
 *execution* | float | Time took to perform the action.
+*date* | String | The date that was passed. In the case of tomorrow/today actions the corresponding date is returned.
 ### Error Handling
 > If errors occurs while performing the action you asked a response JSON like the one below is sent.
 ```json
@@ -125,6 +129,10 @@ Key | Type | Definition
         - [x] GET request for date checking.
         - [x] GET request for holiday list.
     - [ ] External Documentation Page
+- `v0.0.2`: Alpha 2
+    - [x] Added `Today`.
+    - [x] Added `Tomorrow`.    
+    - [x] Added `date` as a response to /check action.
 ## :cat2:Acknowledgements
 - Thanks for my data sources.
     - https://publicholidays.jp
