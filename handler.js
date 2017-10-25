@@ -16,7 +16,8 @@ var data = {
     end: 0,
     execution: 0
   },
-  ls: null
+  ls: null,
+  dates: []
 };
 
 const URL = process.env.URL || "";
@@ -54,7 +55,10 @@ const fn = {
   sexyback: (events, response) => {
     if(fn.callback !== null){
       console.log("---------Response-----------");            
-      console.log(response);
+      
+      if(!DEPLOY){
+        console.log(response);
+      }
 
       fn.callback(null, response);
     }else{
@@ -209,7 +213,15 @@ const fn = {
       fn.log("//Date Valid");
 
       let newObj = {};
-      let obj = fn.getch("M-dd", false);
+      let obj = data.dates;
+      if(data.dates.length == 0){
+        fn.log("//Using List from S3");
+        data.dates = fn.getch("M-dd", false);
+
+        obj = data.dates;
+      }else{
+        fn.log("//Using Cache");
+      }
 
       newObj.holiday = obj.holidays.includes(date);
       newObj.result = true;

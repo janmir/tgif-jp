@@ -1,5 +1,5 @@
 {
-    "action":"LIST",
+    "action":"today",
     "format":"M-%3ED",
     "date": "Jan-01"
 }
