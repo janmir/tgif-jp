@@ -98,6 +98,7 @@ Key | Type | Definition
     "holiday": false,
     "result": true,
     "execution": 0100.0010,
+    "description": "It's my birthday!",
     "date": "Mar-15"
 }
 ```
@@ -106,6 +107,7 @@ Key | Type | Definition
 *result* | bool | Result of the API request.
 *holiday* | Array | If given date is a holiday.
 *execution* | float | Time took to perform the action.
+*description* | String | Holiday description.
 *date* | String | The date that was passed. In the case of tomorrow/today actions the corresponding date is returned.
 ### Error Handling
 > If errors occurs while performing the action you asked a response JSON like the one below is sent.
@@ -133,6 +135,7 @@ Key | Type | Definition
     - [x] Added `Today`.
     - [x] Added `Tomorrow`.    
     - [x] Added `date` as a response to /check action.
+    - [x] Added `description` of holiday on check requests.
 ## :cat2:Acknowledgements
 - Thanks for my data sources.
     - https://publicholidays.jp
