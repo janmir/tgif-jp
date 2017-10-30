@@ -17,7 +17,8 @@ var data = {
     execution: 0
   },
   ls: null,
-  dates: []
+  dates: [],
+  date_description: []
 };
 
 const URL = process.env.URL || "";
@@ -215,15 +216,35 @@ const fn = {
       let newObj = {};
       let obj = data.dates;
       if(data.dates.length == 0){
-        fn.log("//Using List from S3");
-        data.dates = fn.getch("M-dd", false);
+        fn.log("//Using List from S3 for dates");
+        data.dates = fn.getch("M-dd", false).holidays;
 
         obj = data.dates;
       }else{
-        fn.log("//Using Cache");
+        fn.log("//Using Cache for dates");
       }
 
-      newObj.holiday = obj.holidays.includes(date);
+      //let isHoliday = obj.holidays.includes(date);
+      let index = obj.indexOf(date);
+      let isHoliday = index >= 0;
+
+      if(isHoliday){
+        fn.log("//Getting Holiday Description");
+
+        let descs = data.date_description;
+        if(descs.length == 0){
+          fn.log("//Using List from S3 for descriptions");
+          data.date_description = fn.getch("D", false).holidays;
+
+          descs = data.date_description;
+        }else{
+          fn.log("//Using Cache for descriptions");
+        }
+
+        newObj.description = descs[index];
+      }
+
+      newObj.holiday = isHoliday;
       newObj.result = true;
       newObj.execution = fn.perfEnd();
       newObj.date = date;
