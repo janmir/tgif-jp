@@ -57,7 +57,7 @@ const fn = {
     if(fn.callback !== null){
       console.log("---------Response-----------");            
       
-      if(!DEPLOY){
+      if(DEPLOY){
         console.log(response);
       }
 
