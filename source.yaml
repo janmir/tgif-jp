@@ -1,9 +1,9 @@
-- url: https://publicholidays.jp
+- url: https://publicholidays.jp/2018-dates
   selector: tr.vevent
   child: td
-- url: http://www.officeholidays.com/countries/japan/index.php
-  selector: tr.holiday
-  child: td
+#- url: http://www.officeholidays.com/countries/japan/index.php
+#  selector: tr.holiday
+#  child: td
 #- url: http://www8.cao.go.jp/chosei/shukujitsu/gaiyou.html
 #  selector: tr
 #  child: td

@@ -424,7 +424,7 @@ const fn = {
                 });
 
                 //remove all dates
-                let str = element.text.replace(/[\d]{4}-[0-1][0-9]-[0-2][0-9]/g,"");
+                let str = element.text.replace(/[\d]{4}-[0-1][0-9]-[0-3][0-9]/g,"");
 
                 //remove all double space
                 str = str.replace(/(\s\s)+/gi, "");
@@ -435,6 +435,7 @@ const fn = {
                 fn.log("Input: " + str);
 
                 //Matches
+                //Error Occurs on http://www.officeholidays.com/countries/japan/index.php can't match complete month names yet, to be added
                 let date = str.match(/((Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s[0-3]*[0-9]|[0-3]*[0-9]\s(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec))/g);
                 let week = str.match(/(Sun|Mon|Tue|Wed|Thu|Fri|Sat)/g);
 
