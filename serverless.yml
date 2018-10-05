@@ -19,7 +19,7 @@ functions:
       BUCKET: jp.holidays
       YAML_FILE: source.yaml
       FILE: .csv
-      EMAIL: paulzu100@gmail.com
+      EMAIL: ****@gmail.com
       EMAIL_REGION: us-east-1
       JSON_FILE: jp.json
       SEND_MAIL: false
